@@ -63,4 +63,6 @@ class ProfileServiceSelector {
             );
         }
       });
+
+  bool get isLoading => getData((state) => state is LoadingState<Profile, ProfileErrorType>);
 }
