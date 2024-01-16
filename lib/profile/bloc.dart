@@ -38,23 +38,22 @@ class ProfileService extends Bloc<ProfileEvent, State<Profile, ProfileErrorType>
   ) async {
     final currentProfile = _getCurrentProfile();
     emit(LoadingState(value: Option.of(currentProfile)));
-  
-  try {
-    await Future.delayed(Duration(seconds: Random().nextInt(2) + 1));
-    // Re-emit the current profile to signify the completion of the save operation
-    emit(DataState(value: currentProfile));
-  } catch (error) {
-    // In case of an error, emit an ErrorState
-    emit(ErrorState(
-      value: Option.of(currentProfile),
-      error: ProfileErrorType(
+
+    try {
+      await Future.delayed(Duration(seconds: Random().nextInt(2) + 1));
+      // Re-emit the current profile to signify the completion of the save operation
+      emit(DataState(value: currentProfile));
+    } catch (error, stacktrace) {
+      // In case of an error, emit an ErrorState
+      emit(ErrorState(
         value: Option.of(currentProfile),
-        error: error,
-        profile: currentProfile,
-      ),
-    ));
+        error: ProfileErrorType(
+          error: error,
+          trace: stacktrace,
+        ),
+      ));
+    }
   }
-}
 
   void _onClearProfile(
     ClearProfileEvent event,

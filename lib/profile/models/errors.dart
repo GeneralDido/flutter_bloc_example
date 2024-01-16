@@ -1,16 +1,22 @@
-import 'package:flutter_bloc_example/core/core.dart';
-import 'package:flutter_bloc_example/profile/models/profile.dart';
+import 'package:flutter_bloc_example/core/error_type.dart';
+import 'package:flutter_bloc_example/core/mixins/to_string_error.dart';
+import 'package:flutter_bloc_example/core/mixins/to_string_runtime_type.dart';
 
-/// Base profile error type, indicates [error] at [trace] with [profile]
-class ProfileErrorType extends ErrorState<Profile, dynamic> {
-  final Profile profile;
+class ProfileErrorType with ToStringRuntimeTypeMixin, ToStringErrorMixin implements ErrorType {
+  @override
+  final Object error;
+  @override
+  final StackTrace trace;
 
   const ProfileErrorType({
-    required this.profile,
-    required super.value,
-    required super.error,
+    required this.error,
+    required this.trace,
   });
+}
 
-  @override
-  String toString() => "${super.toString()} (profile: $profile)";
+class UnknownProfileErrorType extends ProfileErrorType {
+  const UnknownProfileErrorType({
+    required super.error,
+    required super.trace,
+  });
 }
