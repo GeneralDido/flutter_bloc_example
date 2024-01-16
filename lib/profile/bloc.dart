@@ -1,20 +1,15 @@
 import 'dart:math';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_bloc_example/profile/events.dart';
+import 'package:flutter_bloc_example/core/core.dart';
+import 'package:flutter_bloc_example/profile/models/errors.dart';
+import 'package:flutter_bloc_example/profile/models/events.dart';
 import 'package:flutter_bloc_example/profile/models/profile.dart';
-import 'package:flutter_bloc_example/profile/models/profile_state.dart';
+import 'package:fpdart/fpdart.dart' hide State;
 
-
-class ProfileService extends Bloc<ProfileEvent, ProfileState> {
+class ProfileService extends Bloc<ProfileEvent, State<Profile, ProfileErrorType>> {
   ProfileService()
-      : super(const ProfileState(
-          profile: Profile(
-            name: '',
-            age: 0,
-          ),
-          isLoading: false,
-        )) {
+      : super(const InitState()) { // Initialize with InitState
     on<NameChangedProfileEvent>(_onNameChanged);
     on<AgeChangedProfileEvent>(_onAgeChanged);
     on<SaveProfileEvent>(_onSaveProfile);
@@ -23,37 +18,56 @@ class ProfileService extends Bloc<ProfileEvent, ProfileState> {
 
   void _onNameChanged(
     NameChangedProfileEvent event,
-    Emitter<ProfileState> emit,
-  ) =>
-      emit(ProfileState(
-        profile: Profile(name: event.name, age: state.profile.age),
-        isLoading: false,
-      ));
+    Emitter<State<Profile, ProfileErrorType>> emit,
+  ) {
+    final currentProfile = _getCurrentProfile();
+    emit(DataState(value: currentProfile.copyWith(name: event.name)));
+  }
 
   void _onAgeChanged(
     AgeChangedProfileEvent event,
-    Emitter<ProfileState> emit,
-  ) =>
-      emit(ProfileState(
-        profile: Profile(name: state.profile.name, age: event.age),
-        isLoading: false,
-      ));
+    Emitter<State<Profile, ProfileErrorType>> emit,
+  ) {
+    final currentProfile = _getCurrentProfile();
+    emit(DataState(value: currentProfile.copyWith(age: event.age)));
+  }
 
   void _onSaveProfile(
     SaveProfileEvent event,
-    Emitter<ProfileState> emit,
+    Emitter<State<Profile, ProfileErrorType>> emit,
   ) async {
-    emit(ProfileState(profile: state.profile, isLoading: true));
+    final currentProfile = _getCurrentProfile();
+    emit(LoadingState(value: Option.of(currentProfile)));
+  
+  try {
     await Future.delayed(Duration(seconds: Random().nextInt(2) + 1));
-    emit(ProfileState(profile: state.profile, isLoading: false));
+    // Re-emit the current profile to signify the completion of the save operation
+    emit(DataState(value: currentProfile));
+  } catch (error) {
+    // In case of an error, emit an ErrorState
+    emit(ErrorState(
+      value: Option.of(currentProfile),
+      error: ProfileErrorType(
+        value: Option.of(currentProfile),
+        error: error,
+        profile: currentProfile,
+      ),
+    ));
   }
+}
 
   void _onClearProfile(
     ClearProfileEvent event,
-    Emitter<ProfileState> emit,
-  ) =>
-      emit(const ProfileState(
-        profile: Profile(name: '', age: 0),
-        isLoading: false,
-      ));
+    Emitter<State<Profile, ProfileErrorType>> emit,
+  ) {
+    emit(const InitState()); // Reset to initial state with default profile
+  }
+
+  Profile _getCurrentProfile() {
+  // Retrieve the current profile or return a default profile if not available
+    return state is DataState<Profile, ProfileErrorType> ? 
+    (state as DataState<Profile, ProfileErrorType>).value : 
+    const Profile(name: '', age: 0);
+  }
 }
+
