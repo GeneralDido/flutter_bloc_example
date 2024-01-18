@@ -40,7 +40,7 @@ class ErrorState<T, E> extends State<T, E> {
   final E error;
 
   const ErrorState({
-    required this.value,
+    this.value = const Option.none(),
     required this.error,
   });
 
@@ -59,7 +59,7 @@ class LoadingState<T, E> extends State<T, E> {
   final Option<T> value;
 
   const LoadingState({
-    required this.value,
+    this.value = const Option.none(),
   });
 
   @override
