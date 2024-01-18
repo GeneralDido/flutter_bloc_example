@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc_example/profile/widgets/clear_profile_button.dart';
 import 'package:flutter_bloc_example/profile/widgets/edit_profile_age_field.dart';
 import 'package:flutter_bloc_example/profile/widgets/edit_profile_name_field.dart';
+import 'package:flutter_bloc_example/profile/widgets/load_profile_button.dart';
 import 'package:flutter_bloc_example/profile/widgets/save_profile_button.dart';
 import 'package:flutter_bloc_example/profile/widgets/show_profile_age_field.dart';
 
@@ -20,6 +21,7 @@ class ProfileForm extends StatelessWidget {
                 child: SaveProfileButton(),
               ),
               ClearProfileButton(),
+              LoadProfileButton(),
             ],
           ),
         ],

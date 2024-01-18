@@ -7,6 +7,13 @@ import 'package:flutter_bloc_example/profile/models/events.dart';
 import 'package:flutter_bloc_example/profile/models/profile.dart';
 import 'package:fpdart/fpdart.dart' hide State;
 
+Future<Profile> profileLoader() async {
+  // Simulate an asynchronous operation by delaying for a short duration
+  await Future.delayed(const Duration(milliseconds: 100));
+  // Return an empty profile
+  return const Profile(name: '', age: 0);
+}
+
 class ProfileService extends Bloc<ProfileEvent, State<Profile, ProfileErrorType>> {
   ProfileService()
       : super(const InitState()) { // Initialize with InitState
@@ -14,44 +21,137 @@ class ProfileService extends Bloc<ProfileEvent, State<Profile, ProfileErrorType>
     on<AgeChangedProfileEvent>(_onAgeChanged);
     on<SaveProfileEvent>(_onSaveProfile);
     on<ClearProfileEvent>(_onClearProfile);
+    on<LoadProfileEvent>(_onLoadProfile);
   }
 
   void _onNameChanged(
     NameChangedProfileEvent event,
     Emitter<State<Profile, ProfileErrorType>> emit,
   ) {
-    final currentProfile = _getCurrentProfile();
-    emit(DataState(value: currentProfile.copyWith(name: event.name)));
+      switch(state) {
+        case InitState<Profile, ProfileErrorType>(): 
+          return;
+        case DataState<Profile, ProfileErrorType>(
+          value: final profile,
+        ):
+          return emit(DataState(
+            value: profile.copyWith(name: event.name),
+          ));
+        case ErrorState<Profile, ProfileErrorType>(
+          value: final option,
+          error: final error,
+        ): return option.match(
+          () => {
+            // no name
+          },
+          (profile) => emit(ErrorState(
+            value: Option.of(profile.copyWith(name: event.name)),
+            error: error,
+          )
+        ));
+        case LoadingState<Profile, ProfileErrorType>(
+          value: final option,
+        ): return option.match(
+          () => {
+            // no name
+          },
+          (profile) => emit(LoadingState(
+            value: Option.of(profile.copyWith(name: event.name)),
+          )
+        ));
+      }
   }
 
   void _onAgeChanged(
     AgeChangedProfileEvent event,
     Emitter<State<Profile, ProfileErrorType>> emit,
   ) {
-    final currentProfile = _getCurrentProfile();
-    emit(DataState(value: currentProfile.copyWith(age: event.age)));
+    switch(state) {
+      case InitState<Profile, ProfileErrorType>(): 
+        return;
+      case DataState<Profile, ProfileErrorType>(
+        value: final profile,
+      ):
+        return emit(DataState(
+          value: profile.copyWith(age: event.age),
+        ));
+      case ErrorState<Profile, ProfileErrorType>(
+        value: final option,
+        error: final error,
+      ): return option.match(
+        () => {
+          // no age
+        },
+        (profile) => emit(ErrorState(
+          value: Option.of(profile.copyWith(age: event.age)),
+          error: error,
+        )
+      ));
+      case LoadingState<Profile, ProfileErrorType>(
+        value: final option,
+      ): return option.match(
+        () => {
+          // no age
+        },
+        (profile) => emit(LoadingState(
+          value: Option.of(profile.copyWith(age: event.age)),
+        )
+      ));
+    }
   }
 
   void _onSaveProfile(
     SaveProfileEvent event,
     Emitter<State<Profile, ProfileErrorType>> emit,
   ) async {
-    final currentProfile = _getCurrentProfile();
-    emit(LoadingState(value: Option.of(currentProfile)));
-
-    try {
-      await Future.delayed(Duration(seconds: Random().nextInt(2) + 1));
-      // Re-emit the current profile to signify the completion of the save operation
-      emit(DataState(value: currentProfile));
-    } catch (error, stacktrace) {
-      // In case of an error, emit an ErrorState
-      emit(ErrorState(
-        value: Option.of(currentProfile),
-        error: ProfileErrorType(
-          error: error,
-          trace: stacktrace,
-        ),
-      ));
+    switch (state) {
+      case InitState<Profile, ProfileErrorType>():
+        return;
+      case DataState<Profile, ProfileErrorType>(
+        value: final profile,
+      ):
+        emit(LoadingState(value: Option.of(profile)));
+        try {
+          await Future.delayed(Duration(seconds: Random().nextInt(2) + 1));
+          // Simulate successful save
+          emit(DataState(value: profile)); // Keep the same profile in the DataState
+        } catch (error, trace) {
+          emit(ErrorState(
+            value: Option.of(profile),
+            error: UnknownProfileErrorType(
+              error: error,
+              trace: trace,
+            ),
+          ));
+        }
+        break;
+      case ErrorState<Profile, ProfileErrorType>(
+        value: final option,
+      ):
+        option.match(
+          () {
+            // no data
+          },
+          (profile) async {
+            emit(LoadingState(value: Option.of(profile)));
+            try {
+              await Future.delayed(Duration(seconds: Random().nextInt(2) + 1));
+              // Simulate successful save
+              return emit(DataState(value: profile)); // Keep the same profile in the DataState
+            } catch (error, trace) {
+              return emit(ErrorState(
+                value: Option.of(profile),
+                error: UnknownProfileErrorType(
+                  error: error,
+                  trace: trace,
+                ),
+              ));
+            }
+          },
+        );
+      case LoadingState<Profile, ProfileErrorType>():
+        // Already in a loading state, do nothing
+        return;
     }
   }
 
@@ -59,14 +159,52 @@ class ProfileService extends Bloc<ProfileEvent, State<Profile, ProfileErrorType>
     ClearProfileEvent event,
     Emitter<State<Profile, ProfileErrorType>> emit,
   ) {
-    emit(const InitState()); // Reset to initial state with default profile
+    switch(state) {
+      case InitState<Profile, ProfileErrorType>(): 
+        return;
+      case DataState<Profile, ProfileErrorType>():
+        return emit(const DataState(
+          value: Profile(name: '', age: 0),
+      ));
+      case ErrorState<Profile, ProfileErrorType>(
+        value: final option,
+        error: final error,
+      ): return option.match(
+        () => {
+          // no data
+        },
+        (profile) => emit(ErrorState(
+          value: const Option.of(Profile(name: '', age: 0)),
+          error: error,
+        )
+      ));
+      case LoadingState<Profile, ProfileErrorType>(
+        value: final option,
+      ): return option.match(
+        () => {
+          // no data
+        },
+        (profile) => emit(const LoadingState(
+          value: Option.of(Profile(name: '', age: 0)),
+        )
+      ));
+    }
   }
-
-  Profile _getCurrentProfile() {
-  // Retrieve the current profile or return a default profile if not available
-    return state is DataState<Profile, ProfileErrorType> ? 
-    (state as DataState<Profile, ProfileErrorType>).value : 
-    const Profile(name: '', age: 0);
+  
+  /// Loads profile using [loader] and updates state
+  Future<void> _onLoadProfile(LoadProfileEvent event,
+    Emitter<State<Profile, ProfileErrorType>> emit,
+  ) async {
+    emit(const LoadingState());
+    try {
+      emit(DataState(value: await profileLoader()));
+    }
+    catch (error, trace) {
+      emit(ErrorState(error: UnknownProfileErrorType(
+        error: error,
+        trace: trace,
+      )));
+    }
   }
 }
 

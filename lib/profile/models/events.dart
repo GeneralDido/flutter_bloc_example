@@ -25,3 +25,7 @@ class SaveProfileEvent extends ProfileEvent {
 class ClearProfileEvent extends ProfileEvent {
   const ClearProfileEvent();
 }
+
+class LoadProfileEvent extends ProfileEvent {
+  const LoadProfileEvent();
+}
