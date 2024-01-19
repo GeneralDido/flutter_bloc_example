@@ -72,3 +72,53 @@ class LoadingState<T, E> extends State<T, E> {
   @override
   String toString() => "${super.toString()} (value: $value)";
 }
+
+// it's like we wrote it inside the State class
+extension StateExtension<T, E> on State<T, E> {
+  bool get isInit => this is InitState<T, E>;
+
+  bool get isData => this is DataState<T, E>;
+
+  bool get isError => this is ErrorState<T, E>;
+
+  bool get isLoading => this is LoadingState<T, E>;
+
+  // T is the Data model, E is the Error
+  State<T, E> map(T Function(T) mapper) {
+    switch (this) {
+      case InitState<T, E>():
+        return this;
+
+      case DataState<T, E>(
+        value: final value,
+      ):
+        return DataState(
+          value: mapper(value),
+        );
+
+      case ErrorState<T, E>(
+          value: final option,
+          error: final error,
+        ):
+        return option.match(
+          () => this,
+          (data) => ErrorState(
+            value: Option.of(mapper(data)),
+            error: error,
+          ),
+        );
+
+      case LoadingState<T, E>(
+          value: final option,
+        ):
+        return option.match(
+          () => this,
+          (data) => LoadingState(
+            value: Option.of(mapper(data)),
+          ),
+        );
+    }
+  }
+
+}
+  
